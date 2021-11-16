@@ -30,7 +30,7 @@ contract User{
 		username = _username;
 	}
 	
-	function makeBid(Auction auction, uint256 amount) public {
-		auction.makeBid(amount, this);
-	}
+//	function makeBid(Auction auction, uint256 amount) public {
+//		auction.makeBid(amount, this);
+//	}
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 
 pragma solidity >=0.8.9 <0.9.0;
-import "./User.sol";
+//import "./User.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract Auction{
@@ -10,19 +10,20 @@ contract Auction{
     uint256	public closingTimer;
 	uint256 public blockTiming;
 	bool public isAlive;
-    User public seller; //owner of the Auction
+    address payable public  seller; //owner of the Auction
     uint256 public highestBid; //should always stay length 1 dictionary - string is the username of the highest Bid and Integer is the amount
-    User public highestBidder;
+    address public highestBidder;
     IERC721 public nft;
     uint256 public  nftID;
  
     constructor(){
-		//closingTimer = 43200; //30 days worth of minutes
+		closingTimer = 43200; //30 days worth of minutes
 		isAlive = true;//not really adding timer functionality rn
-		User defaultUser = new User();
-	    highestBidder = defaultUser;
+		
 		highestBid=0;
 	//	seller = User();
+	
+	
 
 	}
 	
@@ -33,11 +34,11 @@ contract Auction{
 	
 
 
-	function makeBid(uint256 amount, User person) public aliveAuction{
+	function makeBid(uint256 amount) public payable aliveAuction{
 	    	bidMade = true;
-	if(!(amount > person.getBalance()) || !(amount < highestBid)){
+    	if(!(amount > msg.sender.balance) || !(amount < highestBid)){
 	    highestBid = amount;
-	    highestBidder = person;
+	    highestBidder = msg.sender;
 	}
 
 
@@ -48,8 +49,7 @@ contract Auction{
 	function  pullHighestBid ()  public onlyHighestBidder aliveAuction{ // does not go to the second highest bidder, clears the auction and extends time instead
 		
 		highestBid = 0;
-		highestBidder = new User();//empty user
-		
+
 		extendTime(5);//adds 5 min
 
 	}
@@ -60,18 +60,20 @@ contract Auction{
 
 	function finishAuction() public payable aliveAuction isOwner{
 		isAlive = false;
-		User winner = highestBidder;
+		address winner = highestBidder;
 		uint256 winningAmnt = highestBid;
+		closingTimer = 0; //for right now im just manually adjusting the timer and finishing the auction
         
-		winner.setBalance(winner.getBalance() - winningAmnt);
-		nft.safeTransferFrom(address(this), winner.getUsername(), nftID);
-		nft.approve(winner.getUsername(), nftID);
+	//	winner.setBalance(winner.getBalance() - winningAmnt);
+		nft.safeTransferFrom(address(this), winner, nftID);
+		nft.approve(winner, nftID);
+		seller.transfer(msg.value);
 	}
 	
 
 
     modifier onlyHighestBidder() {
-       require(msg.sender == highestBidder.getUsername(), "Not highest bidder");
+       require(msg.sender == highestBidder, "Not highest bidder");
         _;
     }
 
@@ -82,7 +84,7 @@ contract Auction{
     }
     
     modifier isOwner(){
-        require(msg.sender == seller.getUsername(), "you cannot perform this acttion, you are not the seller");
+        require(msg.sender == seller, "you cannot perform this acttion, you are not the seller");
         _;
     }
     
