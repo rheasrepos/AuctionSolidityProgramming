@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
 
 pragma solidity >=0.8.9 <0.9.0;
+import "./Auction.sol";
 
 contract User{
 
     
-    string private  username;
+    address private  username;
     uint256 private balance;
 
     constructor(){
@@ -21,11 +22,11 @@ contract User{
 	    balance = _balance;
 	}
 
-	function getUsername() public returns(string){
+	function getUsername() public returns( address ){
 		return username;
 	}
 
-	function setUsername(string _username) public{
+	function setUsername(address _username) public{
 		username = _username;
 	}
 	

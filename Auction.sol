@@ -12,18 +12,23 @@ contract Auction{
 	uint256 public blockTiming;
 	bool public isAlive;
     User public seller; //owner of the Auction
-	mapping(User => uint256) private highestBid; //should always stay length 1 dictionary - string is the username of the highest Bid and Integer is the amount
-    IERC721 public immutable nft;
-    uint256 public immutable nftID;
+    uint256 public highestBid; //should always stay length 1 dictionary - string is the username of the highest Bid and Integer is the amount
+    User public highestBidder;
+    IERC721 public nft;
+    uint256 public  nftID;
  
-    constructor(address realNft, uint256 realNftID){
+    constructor(){
 		//closingTimer = 43200; //30 days worth of minutes
 		isAlive = true;//not really adding timer functionality rn
 		User defaultUser = new User();
-	//	highestBid = new mapping(User => uint256);
-		highestBid.push(defaultUser, 0);
-		seller = User();
-		nft = realNft;
+	    highestBidder = defaultUser;
+		highestBid=0;
+	//	seller = User();
+
+	}
+	
+	function createNFT(address realNft, uint256 realNftID) public{
+	    nft = IERC721(realNft);
 		nftID = realNftID;
 	}
 	
@@ -31,20 +36,18 @@ contract Auction{
 
 	function makeBid(uint256 amount, User person) public aliveAuction{
 	    	bidMade = true;
-		
-			require(!(amount > person.getBalance()) || !(amount < getHighestBidAmount()), highestBid.put(person, amount));
-		
-		    if(highestBid.length() > 1){
-		    	highestBid.remove(getHighestBidder());
-		    }
-		
+	if(!(amount > person.getBalance()) || !(amount < highestBid)){
+	    highestBid = amount;
+	    highestBidder = person;
+	}
 	
 
 	}
 
 	function  pullHighestBid ()  public onlyHighestBidder aliveAuction{ // does not go to the second highest bidder, clears the auction and extends time instead
 		
-		highestBid.remove(1);
+		highestBid = 0;
+		highestBidder = new User();//empty user
 		
 		extendTime(5);//adds 5 min
 
@@ -54,34 +57,28 @@ contract Auction{
 		closingTimer += addedTime;
 	}
 
-	function finishAuction() public aliveAuction isOwner{
+	function finishAuction() public payable aliveAuction isOwner{
 		isAlive = false;
-		User winner = getHighestBidder();
-		uint256 winningAmnt = getHighestBidAmount();
+		User winner = highestBidder;
+		uint256 winningAmnt = highestBid;
         
 		winner.setBalance(winner.getBalance() - winningAmnt);
-		nft.safeTransferFrom(seller, winner, nftID);
+		nft.safeTransferFrom(address(this), winner, nftID);
 		nft.approve(winner, nftID);
 		require(true, winner.getUsername() + " has won this auction with a bid of " + winningAmnt + "");
         
 	}
 	
-	function getHighestBidder() public returns(User) {
-		return highestBid.entrySet().iterator().next().getKey();
-	}
+
 	
-	function getHighestBidAmount() public returns (uint256){
-		return highestBid.entrySet().iterator().next().getValue();
-	}
-	
-//	function transferFrom(User tFrom, User to, nftID) public payable{
-	   // if(isAlive == false){
+	function transferFrom(User tFrom, User to, nftID) public payable{
+	    if(isAlive == false){
 	        
-	   // }	
-//	}
+	    }	
+	}
 
     modifier onlyHighestBidder() {
-        require(msg.sender == getHighestBidder, "Not highest bidder");
+       require(msg.sender == highestBidder, "Not highest bidder");
         _;
     }
 
