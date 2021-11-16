@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract Auction{
     uint256 public buyNowPrice;
-    string public  description;
     bool public bidMade;
     uint256	public closingTimer;
 	uint256 public blockTiming;
@@ -40,9 +39,11 @@ contract Auction{
 	    highestBid = amount;
 	    highestBidder = person;
 	}
-	
+
 
 	}
+	
+
 
 	function  pullHighestBid ()  public onlyHighestBidder aliveAuction{ // does not go to the second highest bidder, clears the auction and extends time instead
 		
@@ -63,33 +64,25 @@ contract Auction{
 		uint256 winningAmnt = highestBid;
         
 		winner.setBalance(winner.getBalance() - winningAmnt);
-		nft.safeTransferFrom(address(this), winner, nftID);
-		nft.approve(winner, nftID);
-		require(true, winner.getUsername() + " has won this auction with a bid of " + winningAmnt + "");
-        
+		nft.safeTransferFrom(address(this), winner.getUsername(), nftID);
+		nft.approve(winner.getUsername(), nftID);
 	}
 	
 
-	
-	function transferFrom(User tFrom, User to, nftID) public payable{
-	    if(isAlive == false){
-	        
-	    }	
-	}
 
     modifier onlyHighestBidder() {
-       require(msg.sender == highestBidder, "Not highest bidder");
+       require(msg.sender == highestBidder.getUsername(), "Not highest bidder");
         _;
     }
 
 
     modifier aliveAuction() {
-        require(isAlive, "Not a live auction");
+        require(isAlive && closingTimer != 0, "Not a live auction");
         _;
     }
     
     modifier isOwner(){
-        require(msg.sender == seller, "you cannot perform this acttion, you are not the seller");
+        require(msg.sender == seller.getUsername(), "you cannot perform this acttion, you are not the seller");
         _;
     }
     
