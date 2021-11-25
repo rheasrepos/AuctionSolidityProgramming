@@ -51,17 +51,17 @@ contract Auction{
 		highestBid = 0;
 
 		extendTime(5);//adds 5 min
-
+        bidMade = false;
 	}
 
 	function extendTime (uint256 addedTime) public{
 		closingTimer += addedTime;
 	}
 
-	function finishAuction() public payable aliveAuction isOwner{
+	function finishAuction() public payable aliveAuction bidIsMade isOwner{
 		isAlive = false;
 		address winner = highestBidder;
-		uint256 winningAmnt = highestBid;
+		//uint256 winningAmnt = highestBid;
 		closingTimer = 0; //for right now im just manually adjusting the timer and finishing the auction
         
 	//	winner.setBalance(winner.getBalance() - winningAmnt);
@@ -85,6 +85,11 @@ contract Auction{
     
     modifier isOwner(){
         require(msg.sender == seller, "you cannot perform this acttion, you are not the seller");
+        _;
+    }
+    
+    modifier bidIsMade(){
+        require(bidMade, "no bids have been made");
         _;
     }
     
